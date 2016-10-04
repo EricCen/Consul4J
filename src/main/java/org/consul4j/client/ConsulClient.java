@@ -15,7 +15,8 @@ public class ConsulClient {
     private final String consulHost;
     private final int consulPort;
     private final OkHttpClient okHttpClient;
-    private static final String CONSUL_KEY_VALUE_PREFIX = "/v1/kv/";
+    private static final String CONSUL_KEY_VALUE_V1_PREFIX = "v1";
+    private static final String CONSUL_KEY_VALUE_KV_PREFIX = "kv";
 
     public ConsulClient(String consulHost, int consulPort) {
         Preconditions.checkNotNull(consulHost);
@@ -27,15 +28,7 @@ public class ConsulClient {
 
     public String getValueByKeyFromConsul(String key){
         String value;
-        Request.Builder requestBuilder = new Request.Builder();
-        HttpUrl httpUrl = new HttpUrl.Builder()
-                .scheme("http")
-                .host(consulHost)
-                .port(consulPort)
-                .addPathSegment(CONSUL_KEY_VALUE_PREFIX)
-                .addPathSegment(key)
-                .build();
-        requestBuilder.url(httpUrl);
+        Request.Builder requestBuilder = createRequestBuilder(key);
         requestBuilder.method("GET", null);
         Request request = requestBuilder.build();
 
@@ -52,21 +45,14 @@ public class ConsulClient {
     }
 
     public boolean addKeyValueToConsul(String key, String value){
-        Request.Builder requestBuilder = new Request.Builder();
-        HttpUrl httpUrl = new HttpUrl.Builder()
-                          .scheme("http")
-                          .host(consulHost)
-                          .port(consulPort)
-                          .addPathSegment(CONSUL_KEY_VALUE_PREFIX)
-                          .addPathSegment(key)
-                          .build();
-        String url = "http://" + consulHost + ":" + consulPort + CONSUL_KEY_VALUE_PREFIX + key;
-        requestBuilder.url(url);
+        Request.Builder requestBuilder = createRequestBuilder(key);
         requestBuilder.method("PUT", RequestBody.create(MediaType.parse("application/x-www-form-urlencoded"), value));
         Request request = requestBuilder.build();
         try {
             Response response = okHttpClient.newCall(request).execute();
-            System.out.println(response.message());
+            if(!response.isSuccessful()){
+                return false;
+            }
         } catch (IOException e) {
            return false;
         }
@@ -74,7 +60,32 @@ public class ConsulClient {
     }
 
     public boolean deleteKeyValueFromConsul(String key){
+        Request.Builder requestBuilder = createRequestBuilder(key);
+        requestBuilder.method("DELETE", null);
+        Request request = requestBuilder.build();
+        try {
+            Response response = okHttpClient.newCall(request).execute();
+            if(!response.isSuccessful()){
+                return false;
+            }
+        } catch (IOException e) {
+            return false;
+        }
         return true;
+    }
+
+    public Request.Builder createRequestBuilder(String key){
+        Request.Builder requestBuilder = new Request.Builder();
+        HttpUrl httpUrl = new HttpUrl.Builder()
+                .scheme("http")
+                .host(consulHost)
+                .port(consulPort)
+                .addPathSegment(CONSUL_KEY_VALUE_V1_PREFIX)
+                .addPathSegment(CONSUL_KEY_VALUE_KV_PREFIX)
+                .addPathSegment(key)
+                .build();
+        requestBuilder.url(httpUrl);
+        return requestBuilder;
     }
 
 }

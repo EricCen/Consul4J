@@ -16,20 +16,24 @@ public class ConsulClientTest {
     }
 
     @Test
+    public void testKeyValueOperation(){
+        testAddKeyValueToConsul();
+        testGetValueByKeyFromConsul();
+        testDeleteKeyValueFromConsul();
+    }
+
     public void testAddKeyValueToConsul(){
-        boolean result = consulClient.addKeyValueToConsul("Java", "James Gosling");
+        boolean result = consulClient.addKeyValueToConsul("localhost", "127.0.0.1");
         Assert.assertTrue(result);
     }
 
-    @Test
     public void testGetValueByKeyFromConsul(){
-        String value = consulClient.getValueByKeyFromConsul("language");
-        Assert.assertEquals("The value of key is not correct", "java", value);
+        String value = consulClient.getValueByKeyFromConsul("localhost");
+        Assert.assertEquals("The value of key is not correct", "127.0.0.1", value);
     }
 
-    @Test
     public void testDeleteKeyValueFromConsul(){
-        boolean result = consulClient.deleteKeyValueFromConsul("Java's Father");
+        boolean result = consulClient.deleteKeyValueFromConsul("localhost");
         Assert.assertTrue(result);
     }
 
